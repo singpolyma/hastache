@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 -- Module:      Text.Hastache
 -- Copyright:   Sergey S Lymar (c) 2011 
 -- License:     BSD3
@@ -259,9 +258,9 @@ defaultConfig = MuConfig {
     muTemplateFileExt = Nothing
     } 
 
-defOTag = "{{" :: ByteString
-defCTag = "}}" :: ByteString
-unquoteCTag = "}}}" :: ByteString
+defOTag = encodeStr "{{" :: ByteString
+defCTag = encodeStr "}}" :: ByteString
+unquoteCTag = encodeStr "}}}" :: ByteString
 
 findBlock :: 
        ByteString 
@@ -316,7 +315,7 @@ tryFindArrayItem context name = do
         _ -> Nothing
     where
     (nm,idx) = breakSubstring dotStr name
-    dotStr = "."
+    dotStr = encodeStr "."
 
 findCloseSection :: 
        ByteString 
@@ -328,11 +327,11 @@ findCloseSection str name otag ctag = do
     guard (length after > 0)
     Just (before, drop (length close) after)
     where
-    close = foldl1 append [otag, "/", name, ctag]
+    close = foldl1 append [otag, encodeStr "/", name, ctag]
     (before, after) = breakSubstring close str
 
 trimCharsTest :: Word8 -> Bool
-trimCharsTest = (`elem` " \t")
+trimCharsTest = (`elem` encodeStr " \t")
 
 trimAll :: ByteString -> ByteString
 trimAll str = span trimCharsTest str ~> snd ~> spanEnd trimCharsTest ~> fst
