@@ -1,5 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, FlexibleInstances, IncoherentInstances,
-             OverloadedStrings #-}
+{-# LANGUAGE ExistentialQuantification, OverloadedStrings #-}
 -- Module:      Text.Hastache
 -- Copyright:   Sergey S Lymar (c) 2011 
 -- License:     BSD3
@@ -163,14 +162,7 @@ instance MuVar Char where
     toLByteString a = (a : "") ~> encodeStr ~> toLBS
 
 instance MuVar a => MuVar [a] where
-    toLByteString a = toLByteString '[' <+> cnvLst <+> toLByteString ']'
-        where
-        cnvLst = map toLByteString a ~> 
-                LZ.intercalate (toLByteString ',')
-        (<+>) = LZ.append
-
-instance MuVar [Char] where
-    toLByteString k = k ~> encodeStr ~> toLBS
+    toLByteString a = LZ.concat (map toLByteString a)
     isEmpty a = Prelude.length a == 0
 
 data MuType m = 
