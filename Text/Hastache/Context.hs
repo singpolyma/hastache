@@ -1,4 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 -- Module:      Text.Hastache.Context
 -- Copyright:   Sergey S Lymar (c) 2011 
 -- License:     BSD3
@@ -180,30 +179,93 @@ toGenTemp a = zip fields (gmapQ procField a) ~> TObj
     where
     fields = toConstr a ~> constrFields
 
+procFieldMuVariable :: (MuVar a, Monad m) => a -> TD m
+procFieldMuVariable i = muVariable i ~> TSimple
+
+procFieldString :: (Monad m) => String -> TD m
+procFieldString i = muVariable (encodeStr i) ~> TSimple
+
+procFieldChar :: (Monad m) => Char -> TD m
+procFieldChar = procFieldMuVariable
+
+procFieldDouble :: (Monad m) => Double -> TD m
+procFieldDouble = procFieldMuVariable
+
+procFieldFloat :: (Monad m) => Float -> TD m
+procFieldFloat = procFieldMuVariable
+
+procFieldInt :: (Monad m) => Int -> TD m
+procFieldInt = procFieldMuVariable
+
+procFieldInt8 :: (Monad m) => Int8 -> TD m
+procFieldInt8 = procFieldMuVariable
+
+procFieldInt16 :: (Monad m) => Int16 -> TD m
+procFieldInt16 = procFieldMuVariable
+
+procFieldInt32 :: (Monad m) => Int32 -> TD m
+procFieldInt32 = procFieldMuVariable
+
+procFieldInt64 :: (Monad m) => Int64 -> TD m
+procFieldInt64 = procFieldMuVariable
+
+procFieldInteger :: (Monad m) => Integer -> TD m
+procFieldInteger = procFieldMuVariable
+
+procFieldWord :: (Monad m) => Word -> TD m
+procFieldWord = procFieldMuVariable
+
+procFieldWord8 :: (Monad m) => Word8 -> TD m
+procFieldWord8 = procFieldMuVariable
+
+procFieldWord16 :: (Monad m) => Word16 -> TD m
+procFieldWord16 = procFieldMuVariable
+
+procFieldWord32 :: (Monad m) => Word32 -> TD m
+procFieldWord32 = procFieldMuVariable
+
+procFieldWord64 :: (Monad m) => Word64 -> TD m
+procFieldWord64 = procFieldMuVariable
+
+procFieldBSByteString :: (Monad m) => BS.ByteString -> TD m
+procFieldBSByteString = procFieldMuVariable
+
+procFieldLBSByteString :: (Monad m) => LBS.ByteString -> TD m
+procFieldLBSByteString = procFieldMuVariable
+
+procFieldTextText :: (Monad m) => Text.Text -> TD m
+procFieldTextText = procFieldMuVariable
+
+procFieldLTextText :: (Monad m) => LText.Text -> TD m
+procFieldLTextText = procFieldMuVariable
+
+procFieldBool :: (Monad m) => Bool -> TD m
+procFieldBool i = MuBool i ~> TSimple
+
 procField :: (Data a, Monad m, Typeable1 m) => a -> TD m
 procField = 
     obj
     `ext1Q` list
-    `extQ` (\(i::String)            -> muVariable (encodeStr i) ~> TSimple)
-    `extQ` (\(i::Char)              -> muVariable i ~> TSimple)
-    `extQ` (\(i::Double)            -> muVariable i ~> TSimple)
-    `extQ` (\(i::Float)             -> muVariable i ~> TSimple)
-    `extQ` (\(i::Int)               -> muVariable i ~> TSimple)
-    `extQ` (\(i::Int8)              -> muVariable i ~> TSimple)
-    `extQ` (\(i::Int16)             -> muVariable i ~> TSimple)
-    `extQ` (\(i::Int32)             -> muVariable i ~> TSimple)
-    `extQ` (\(i::Int64)             -> muVariable i ~> TSimple)
-    `extQ` (\(i::Integer)           -> muVariable i ~> TSimple)
-    `extQ` (\(i::Word)              -> muVariable i ~> TSimple)
-    `extQ` (\(i::Word8)             -> muVariable i ~> TSimple)
-    `extQ` (\(i::Word16)            -> muVariable i ~> TSimple)
-    `extQ` (\(i::Word32)            -> muVariable i ~> TSimple)
-    `extQ` (\(i::Word64)            -> muVariable i ~> TSimple)
-    `extQ` (\(i::BS.ByteString)     -> muVariable i ~> TSimple)
-    `extQ` (\(i::LBS.ByteString)    -> muVariable i ~> TSimple)
-    `extQ` (\(i::Text.Text)         -> muVariable i ~> TSimple)
-    `extQ` (\(i::LText.Text)        -> muVariable i ~> TSimple)
-    `extQ` (\(i::Bool)              -> MuBool i ~> TSimple)
+    `extQ` procFieldString
+    `extQ` procFieldChar
+    `extQ` procFieldDouble
+    `extQ` procFieldFloat
+    `extQ` procFieldInt
+    `extQ` procFieldInt8
+    `extQ` procFieldInt16
+    `extQ` procFieldInt32
+    `extQ` procFieldInt64
+    `extQ` procFieldInteger
+    `extQ` procFieldWord
+    `extQ` procFieldWord8
+    `extQ` procFieldWord16
+    `extQ` procFieldWord32
+    `extQ` procFieldWord64
+    `extQ` procFieldBSByteString
+    `extQ` procFieldLBSByteString
+    `extQ` procFieldTextText
+    `extQ` procFieldLTextText
+    `extQ` procFieldBool
     
     `extQ` muLambdaBSBS
     `extQ` muLambdaSS
