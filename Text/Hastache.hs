@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 -- Module:      Text.Hastache
 -- Copyright:   Sergey S Lymar (c) 2011 
 -- License:     BSD3
@@ -68,6 +68,9 @@ module Text.Hastache (
     , hastacheFileBuilder
     , MuContext
     , MuType(..)
+    , muVariable
+    , muLambda
+    , muLambdaM
     , MuConfig(..)
     , MuVar(..)
     , htmlEscape
@@ -79,7 +82,7 @@ module Text.Hastache (
     , decodeStrLBS
     ) where 
 
-import Control.Monad (guard, when)
+import Control.Monad (guard, when, liftM)
 import Control.Monad.Reader (ask, runReaderT, MonadReader, ReaderT)
 import Control.Monad.Trans (lift, liftIO, MonadIO)
 import Data.AEq (AEq,(~==))
@@ -165,12 +168,12 @@ instance MuVar a => MuVar [a] where
     toLByteString a = LZ.concat (map toLByteString a)
     isEmpty a = Prelude.length a == 0
 
-data MuType m = 
-    forall a. MuVar a => MuVariable a                   |
-    MuList [MuContext m]                                |
-    MuBool Bool                                         |
-    forall a. MuVar a => MuLambda (ByteString -> a)     |
-    forall a. MuVar a => MuLambdaM (ByteString -> m a)  |
+data MuType m =
+    MuVariable (LZ.ByteString, Bool)                  |
+    MuList [MuContext m]                              |
+    MuBool Bool                                       |
+    MuLambda (ByteString -> (LZ.ByteString, Bool))    |
+    MuLambdaM (ByteString -> m (LZ.ByteString, Bool)) |
     MuNothing
 
 instance Show (MuType m) where
@@ -180,6 +183,21 @@ instance Show (MuType m) where
     show (MuLambda _) = "MuLambda <..>"
     show (MuLambdaM _) = "MuLambdaM <..>"
     show MuNothing = "MuNothing"
+
+muTuple :: (MuVar a) => a -> (LZ.ByteString, Bool)
+muTuple a = (toLByteString a, isEmpty a)
+
+-- | Smart constructor for MuVariable
+muVariable :: (MuVar a) => a -> MuType m
+muVariable = MuVariable . muTuple
+
+-- | Smart constructor for MuLambda
+muLambda :: (MuVar a) => (ByteString -> a) -> MuType m
+muLambda f = MuLambda (muTuple . f)
+
+-- | Smart constructor for MuLambdaM
+muLambdaM :: (MuVar a, Monad m) => (ByteString -> m a) -> MuType m
+muLambdaM f = MuLambdaM (\x -> muTuple `liftM` f x)
 
 data MuConfig = MuConfig {
     muEscapeFunc        :: LZ.ByteString -> LZ.ByteString, 
@@ -272,7 +290,7 @@ readVar :: MonadIO m => [MuContext m] -> ByteString -> LZ.ByteString
 readVar [] _ = LZ.empty
 readVar (context:parentCtx) name =
     case context name of
-        MuVariable a -> toLByteString a
+        MuVariable (lbs,_) -> lbs
         MuBool a -> show a ~> encodeStr ~> toLBS
         MuNothing -> case tryFindArrayItem context name of
             Just (nctx,nn) -> readVar [nctx] nn
@@ -402,22 +420,22 @@ renderBlock contexts symb inTag afterClose otag ctag conf
                             mapM_ (\c -> processBlock sectionContent
                                 (c:contexts) otag ctag conf) b
                             next afterSection
-                        Just (MuVariable a) -> if isEmpty a 
+                        Just (MuVariable (_,isE)) -> if isE
                             then next afterSection
                             else processAndNext
                         Just (MuBool True) -> processAndNext
                         Just (MuLambda func) -> do
-                            func sectionContent ~> toLByteString ~> addResLZ
+                            func sectionContent ~> fst ~> addResLZ
                             next afterSection
                         Just (MuLambdaM func) -> do
-                            res <- lift (func sectionContent)
-                            toLByteString res ~> addResLZ
+                            (res,_) <- lift (func sectionContent)
+                            res ~> addResLZ
                             next afterSection
                         _ -> next afterSection
                     else case readContext of -- inverted section
                         Just (MuList []) -> processAndNext
                         Just (MuBool False) -> processAndNext
-                        Just (MuVariable a) -> if isEmpty a 
+                        Just (MuVariable (_,isE)) -> if isE
                             then processAndNext
                             else next afterSection
                         Nothing -> processAndNext

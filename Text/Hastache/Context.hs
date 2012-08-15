@@ -184,25 +184,25 @@ procField :: (Data a, Monad m, Typeable1 m) => a -> TD m
 procField = 
     obj
     `ext1Q` list
-    `extQ` (\(i::String)            -> MuVariable (encodeStr i) ~> TSimple)
-    `extQ` (\(i::Char)              -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Double)            -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Float)             -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Int)               -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Int8)              -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Int16)             -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Int32)             -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Int64)             -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Integer)           -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Word)              -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Word8)             -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Word16)            -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Word32)            -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Word64)            -> MuVariable i ~> TSimple)
-    `extQ` (\(i::BS.ByteString)     -> MuVariable i ~> TSimple)
-    `extQ` (\(i::LBS.ByteString)    -> MuVariable i ~> TSimple)
-    `extQ` (\(i::Text.Text)         -> MuVariable i ~> TSimple)
-    `extQ` (\(i::LText.Text)        -> MuVariable i ~> TSimple)
+    `extQ` (\(i::String)            -> muVariable (encodeStr i) ~> TSimple)
+    `extQ` (\(i::Char)              -> muVariable i ~> TSimple)
+    `extQ` (\(i::Double)            -> muVariable i ~> TSimple)
+    `extQ` (\(i::Float)             -> muVariable i ~> TSimple)
+    `extQ` (\(i::Int)               -> muVariable i ~> TSimple)
+    `extQ` (\(i::Int8)              -> muVariable i ~> TSimple)
+    `extQ` (\(i::Int16)             -> muVariable i ~> TSimple)
+    `extQ` (\(i::Int32)             -> muVariable i ~> TSimple)
+    `extQ` (\(i::Int64)             -> muVariable i ~> TSimple)
+    `extQ` (\(i::Integer)           -> muVariable i ~> TSimple)
+    `extQ` (\(i::Word)              -> muVariable i ~> TSimple)
+    `extQ` (\(i::Word8)             -> muVariable i ~> TSimple)
+    `extQ` (\(i::Word16)            -> muVariable i ~> TSimple)
+    `extQ` (\(i::Word32)            -> muVariable i ~> TSimple)
+    `extQ` (\(i::Word64)            -> muVariable i ~> TSimple)
+    `extQ` (\(i::BS.ByteString)     -> muVariable i ~> TSimple)
+    `extQ` (\(i::LBS.ByteString)    -> muVariable i ~> TSimple)
+    `extQ` (\(i::Text.Text)         -> muVariable i ~> TSimple)
+    `extQ` (\(i::LText.Text)        -> muVariable i ~> TSimple)
     `extQ` (\(i::Bool)              -> MuBool i ~> TSimple)
     
     `extQ` muLambdaBSBS
@@ -219,28 +219,28 @@ procField =
     list a = map procField a ~> TList
 
     muLambdaBSBS :: (BS.ByteString -> BS.ByteString) -> TD m
-    muLambdaBSBS f = MuLambda f ~> TSimple
+    muLambdaBSBS f = muLambda f ~> TSimple
 
     muLambdaSS :: (String -> String) -> TD m
-    muLambdaSS f = MuLambda fd ~> TSimple
+    muLambdaSS f = muLambda fd ~> TSimple
         where
         fd s = decodeStr s ~> f
 
     muLambdaBSLBS :: (BS.ByteString -> LBS.ByteString) -> TD m
-    muLambdaBSLBS f = MuLambda f ~> TSimple
+    muLambdaBSLBS f = muLambda f ~> TSimple
 
     -- monadic
 
-    muLambdaMBSBS :: (BS.ByteString -> m BS.ByteString) -> TD m
-    muLambdaMBSBS f = MuLambdaM f ~> TSimple
+    muLambdaMBSBS :: (Monad m) => (BS.ByteString -> m BS.ByteString) -> TD m
+    muLambdaMBSBS f = muLambdaM f ~> TSimple
 
-    muLambdaMSS :: (String -> m String) -> TD m
-    muLambdaMSS f = MuLambdaM fd ~> TSimple
+    muLambdaMSS :: (Monad m) => (String -> m String) -> TD m
+    muLambdaMSS f = muLambdaM fd ~> TSimple
         where
         fd s = decodeStr s ~> f
 
-    muLambdaMBSLBS :: (BS.ByteString -> m LBS.ByteString) -> TD m
-    muLambdaMBSLBS f = MuLambdaM f ~> TSimple
+    muLambdaMBSLBS :: (Monad m) => (BS.ByteString -> m LBS.ByteString) -> TD m
+    muLambdaMBSLBS f = muLambdaM f ~> TSimple
 
 convertGenTempToContext :: TD t -> MuContext t
 convertGenTempToContext v = mkMap "" Map.empty v ~> mkMapContext
